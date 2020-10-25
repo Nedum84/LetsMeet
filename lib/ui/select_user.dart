@@ -4,9 +4,10 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:geocoder/geocoder.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:location_tracker/map_location.dart';
+import 'file:///C:/Users/NEDUM/AndroidStudioProjects/location_tracker/lib/ui/map_location.dart';
 import 'package:location_tracker/utils/gen_new_user.dart' as nUser;
 import 'package:modal_progress_hud/modal_progress_hud.dart';
+import 'package:location_tracker/utils/firebase_transaction.dart';
 
 
 class SelectUser extends StatefulWidget {
@@ -21,6 +22,7 @@ User loggedInUser;
 class _SelectUserState extends State<SelectUser> {
   String _myAddress = 'No address';
   String _myName;
+  String _myEmail;
   List<nUser.User> users = [];
   bool showSpinner = false;
 
@@ -35,8 +37,7 @@ class _SelectUserState extends State<SelectUser> {
     Firebase.initializeApp().whenComplete(() async{
       final _auth = FirebaseAuth.instance;
 
-      _auth.authStateChanges()
-          .listen((User user) async{
+      _auth.authStateChanges().listen((User user) async{
         if (user == null) {
           print('User is currently signed out! or not logged IN');
           try {
@@ -178,7 +179,8 @@ class _SelectUserState extends State<SelectUser> {
                                       'latitude': users[index].latitude,
                                       'longitude': users[index].longitude,
                                       'my_name': _myName,
-                                      'my_address': _myAddress
+                                      'my_address': _myAddress,
+                                      'my_email': _myEmail
                                     }
                                 );
                               },
@@ -248,7 +250,7 @@ class _SelectUserState extends State<SelectUser> {
     //     .limit(10)
         .snapshots().forEach((element) {
       for(var item in element.docs){
-        if(loggedInUser.email == item.data()['email']) continue;//skipp my own...
+        if(_myEmail == item.data()['email']) continue;//skipp my own...
         if(users.length!=0 && users.where((element) => element.email==item.data()['email']).length!=0) continue;//skipp if already added...
 
         var name = nUser.GenNewUser.users.where((element) => element.email==item.data()['email']).first.name;
@@ -266,10 +268,13 @@ class _SelectUserState extends State<SelectUser> {
           );
         });
 
+
       }
     });
   }
+
   void addNewUserToDb(String email) async{
+    _myEmail = email;
     setState(() {
       _myName = nUser.GenNewUser.users.where((element) => element.email==email).first.name;
     });
@@ -281,31 +286,9 @@ class _SelectUserState extends State<SelectUser> {
 
       setState(() {_myAddress = first.addressLine;});
 
-
-      var items = await _firestore.collection('location')
-          .where('email', isEqualTo: email)
-          .limit(2)
-          // .orderBy('email', descending:true)
-          .get();
-
-
-      if(items.docs.isNotEmpty){
-        _firestore.collection('location')
-            .doc(items.docs[0].id)//id to update
-            .update({'latitude': position.latitude, 'longitude': position.longitude, 'address': first.addressLine})
-            .then((value){
-          getUsers();
-        }).catchError((error) => print("Failed to update user: $error"));
-      }else{
-        await _firestore.collection('location').add({
-          'email': email,
-          'latitude': position.latitude,
-          'longitude': position.longitude,
-          'address': first.addressLine}).then((value) {
-          getUsers();
-        }).catchError((error) => print("Failed to insert user: $error"));;
-      }
-
+      await FirebaseTransaction.addUserToDb(position, email, first.addressLine).then((value) {
+        getUsers();
+      }).catchError((e) { print(e); });
 
     }).catchError((e) {
       print(e);

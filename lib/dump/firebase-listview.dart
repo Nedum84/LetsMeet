@@ -2,7 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
-import 'package:location_tracker/map_location.dart';
+import 'file:///C:/Users/NEDUM/AndroidStudioProjects/location_tracker/lib/ui/map_location.dart';
 import 'package:location_tracker/utils/constants.dart';
 import 'package:modal_progress_hud/modal_progress_hud.dart';
 

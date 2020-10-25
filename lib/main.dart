@@ -1,7 +1,7 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:location_tracker/ui/select_user.dart';
-import 'map_location.dart';
+import 'ui/map_location.dart';
 import 'ui_map.dart';
 import 'welcome_screen.dart';
 

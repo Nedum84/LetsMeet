@@ -1,7 +1,9 @@
 import 'dart:async';
+import 'dart:math' show cos, sqrt, asin;
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_polyline_points/flutter_polyline_points.dart';
+import 'package:geocoder/geocoder.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 // import 'package:location/location.dart';
@@ -11,6 +13,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:geolocator_platform_interface/src/enums/location_accuracy.dart'
 as geo;
 import 'package:location_tracker/utils/constants.dart';
+import 'package:location_tracker/utils/firebase_transaction.dart';
 import 'package:location_tracker/utils/gen_new_user.dart' as nUser;
 
 class MapLocation extends StatefulWidget {
@@ -27,6 +30,8 @@ class MapLocation extends StatefulWidget {
 class _MapLocationState extends State<MapLocation> {
   String _myAddress;
   String _myName;
+  String _myEmail;
+  bool zoomFlag = false;
   var _distance;
   nUser.User _user = nUser.User();
   Set<Marker> markers = {};
@@ -57,21 +62,41 @@ class _MapLocationState extends State<MapLocation> {
 
   // Method for retrieving the current location
   void updateCurrentLocation() async {
-    _currentPosition =
-    await getCurrentPosition(desiredAccuracy: geo.LocationAccuracy.high);
 
-    startCoordinates.latitude = _currentPosition.latitude;
-    startCoordinates.longitude = _currentPosition.longitude;
+    await getCurrentPosition(desiredAccuracy: LocationAccuracy.high).then((Position position) async {
+      _currentPosition = position;
+      startCoordinates.latitude = _currentPosition.latitude;
+      startCoordinates.longitude = _currentPosition.longitude;
+      final coordinates = Coordinates(position.latitude, position.longitude);// From coordinates
+      var addresses = await Geocoder.local.findAddressesFromCoordinates(coordinates);
+      var first = addresses.first;
 
-    updateMarkers();
-    drawRoutes();
-    setMarkerConstraints();
+      setState(() {_myAddress = first.addressLine;});
+      updateMarkers();
+      drawRoutes();
+      calculateDistance();
+
+      await FirebaseTransaction.addUserToDb(position, _myEmail, first.addressLine).then((value) {
+
+        if(!zoomFlag){
+          zoomFlag= true;
+          setMarkerConstraints();
+        }else{
+          zoomFlag = false;
+          mapController.animateCamera(CameraUpdate.newCameraPosition(
+              CameraPosition(
+                target: LatLng(startCoordinates.latitude, startCoordinates.longitude),
+                zoom: 24,
+              )
+          ));
+        }
+      }).catchError((e) { print(e); });
+
+    }).catchError((e) {
+      print(e);
+    });
   }
 
-  @override
-  void initState() {
-    super.initState();
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -84,6 +109,7 @@ class _MapLocationState extends State<MapLocation> {
       try {
         _myName = arguments['my_name'];
         _myAddress = arguments['my_address'];
+        _myEmail = arguments['my_email'];
         _user.email = arguments['email'];
         _user.name = arguments['name'];
         _user.address = arguments['address'];
@@ -127,75 +153,75 @@ class _MapLocationState extends State<MapLocation> {
           },
         ),
       ),
-      Positioned(
-        top: 60,
-        right: 0,
-        left: 0,
-        child: Container(
-          width: 400,
-          padding: EdgeInsets.symmetric(vertical: 6, horizontal: 12),
-          margin: EdgeInsets.only(top: 6, right: 20, left: 20),
-          decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.all(Radius.circular(5)),
-              border: Border.all(color: Colors.blueGrey[100], width: 1)),
-          child: Row(
-            children: [
-              Icon(Icons.my_location, color: Colors.blueGrey, size: 20,),
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Text(
-                    _myAddress,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      color: Colors.blueGrey,
+        Positioned(
+          top: 60,
+          right: 0,
+          left: 0,
+          child: Container(
+            width: 400,
+            padding: EdgeInsets.symmetric(vertical: 6, horizontal: 12),
+            margin: EdgeInsets.only(top: 6, right: 20, left: 20),
+            decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.all(Radius.circular(5)),
+                border: Border.all(color: Colors.blueGrey[100], width: 1)),
+            child: Row(
+              children: [
+                Icon(Icons.my_location, color: Colors.blueGrey, size: 20,),
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Text(
+                      _myAddress,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: Colors.blueGrey,
+                      ),
                     ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
-      ),
-      Positioned(
-        top: 110,
-        right: 0,
-        left: 0,
-        child: Container(
-          width: 400,
-          padding: EdgeInsets.symmetric(vertical: 6, horizontal: 12),
-          margin: EdgeInsets.only(top: 6, right: 20, left: 20),
-          decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.all(Radius.circular(5)),
-              border: Border.all(color: Colors.blueGrey[100], width: 1)),
-          child: Row(
-            children: [
-              Icon(Icons.location_on_sharp, color: Colors.redAccent, size: 20,),
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Text(
-                    _user.address,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      color: Colors.blueGrey,
+        Positioned(
+          top: 110,
+          right: 0,
+          left: 0,
+          child: Container(
+            width: 400,
+            padding: EdgeInsets.symmetric(vertical: 6, horizontal: 12),
+            margin: EdgeInsets.only(top: 6, right: 20, left: 20),
+            decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.all(Radius.circular(5)),
+                border: Border.all(color: Colors.blueGrey[100], width: 1)),
+            child: Row(
+              children: [
+                Icon(Icons.location_on_sharp, color: Colors.redAccent, size: 20,),
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Text(
+                      _user.address,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: Colors.blueGrey,
+                      ),
                     ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
-      ),
-      Positioned(
-        top: 180,
-        right: 0,
-        left: 0,
-        child: Container(
+        Positioned(
+          top: 180,
+          right: 0,
+          left: 0,
+          child: Container(
             padding: EdgeInsets.symmetric(vertical: 6, horizontal: 12),
             margin: EdgeInsets.only(top: 6, right: 20, left: 20),
             decoration: BoxDecoration(
@@ -214,8 +240,8 @@ class _MapLocationState extends State<MapLocation> {
                 ),
               ),
             ),
+          ),
         ),
-      ),
         Positioned(
           bottom: 30,
           right: 20,
@@ -413,27 +439,36 @@ class _MapLocationState extends State<MapLocation> {
     return LatLngBounds(northeast: LatLng(x1, y1), southwest: LatLng(x0, y0));
   }
 
-  void distance() async {
-    // double distanceInMeters = await Geolocator().distanceBetween(
-    //   startCoordinates.latitude,
-    //   startCoordinates.longitude,
-    //   destinationCoordinates.latitude,
-    //   destinationCoordinates.longitude,
-    // );
+  void calculateDistance() async {
+    double distanceInMeters = distanceBetween(startCoordinates.latitude, startCoordinates.longitude, destinationCoordinates.latitude, destinationCoordinates.longitude,);
+    double distanceInMeters2 = calcDistance(startCoordinates.latitude, startCoordinates.longitude, destinationCoordinates.latitude, destinationCoordinates.longitude);
+
+    setState(() {
+      _distance = (distanceInMeters/1000).toStringAsFixed(2);//to 2 dp
+    });
   }
+
+  double calcDistance(lat1, lon1, lat2, lon2){
+    var p = 0.017453292519943295;
+    var c = cos;
+    var a = 0.5 - c((lat2 - lat1) * p)/2 +
+        c(lat1 * p) * c(lat2 * p) *
+            (1 - c((lon2 - lon1) * p))/2;
+    return 12742 * asin(sqrt(a));
+  }
+
+
+
+
+
 
   // Object for PolylinePoints
   PolylinePoints polylinePoints;
-
 // List of coordinates to join
   List<LatLng> polylineCoordinates = [];
-
-// Map storing polylines created by connecting
-// two points
+// Map storing polylines created by connecting two points
   Map<PolylineId, Polyline> polylines = {};
-
   // Create the polylines for showing the route between two places
-
   void drawRoutes() async {
     // Initializing PolylinePoints
     polylinePoints = PolylinePoints();
@@ -443,8 +478,7 @@ class _MapLocationState extends State<MapLocation> {
     PolylineResult result = await polylinePoints.getRouteBetweenCoordinates(
         API_KEY, // Google Maps API Key
         PointLatLng(_currentPosition.latitude, _currentPosition.longitude),
-        PointLatLng(
-            destinationCoordinates.latitude, destinationCoordinates.longitude));
+        PointLatLng(destinationCoordinates.latitude, destinationCoordinates.longitude));
     // Adding the coordinates to the list
     if (result.points.isNotEmpty) {
       result.points.forEach((PointLatLng point) {
