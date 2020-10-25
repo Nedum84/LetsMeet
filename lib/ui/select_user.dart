@@ -261,6 +261,7 @@ class _SelectUserState extends State<SelectUser> {
                 address: item.data()['address'],
                 latitude: item.data()['latitude'],
                 longitude: item.data()['longitude'],
+                id: item.id
               )
           );
         });
@@ -273,24 +274,39 @@ class _SelectUserState extends State<SelectUser> {
       _myName = nUser.GenNewUser.users.where((element) => element.email==email).first.name;
     });
 
-    await getCurrentPosition(desiredAccuracy: LocationAccuracy.high)
-        .then((Position position) async {
-      // From coordinates
-      final coordinates = Coordinates(position.latitude, position.longitude);
+    await getCurrentPosition(desiredAccuracy: LocationAccuracy.high).then((Position position) async {
+      final coordinates = Coordinates(position.latitude, position.longitude);// From coordinates
       var addresses = await Geocoder.local.findAddressesFromCoordinates(coordinates);
       var first = addresses.first;
-      print("${first.featureName} : ${first.addressLine}");
 
       setState(() {_myAddress = first.addressLine;});
 
-        _firestore.collection('location').add({
+
+      var items = await _firestore.collection('location')
+          .where('email', isEqualTo: email)
+          .limit(2)
+          // .orderBy('email', descending:true)
+          .get();
+
+
+      if(items.docs.isNotEmpty){
+        _firestore.collection('location')
+            .doc(items.docs[0].id)//id to update
+            .update({'latitude': position.latitude, 'longitude': position.longitude, 'address': first.addressLine})
+            .then((value){
+          getUsers();
+        }).catchError((error) => print("Failed to update user: $error"));
+      }else{
+        await _firestore.collection('location').add({
           'email': email,
           'latitude': position.latitude,
           'longitude': position.longitude,
-          'address': first.addressLine
-        });
+          'address': first.addressLine}).then((value) {
+          getUsers();
+        }).catchError((error) => print("Failed to insert user: $error"));;
+      }
 
-      getUsers();//once added, get the current users
+
     }).catchError((e) {
       print(e);
     });

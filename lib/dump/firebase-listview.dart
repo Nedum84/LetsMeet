@@ -121,6 +121,28 @@ class _SelectUserState extends State<SelectUser> {
       //     print(item.data());
       //   }
       // }
+
+
+
+
+
+
+      // DELETE REPETITIVE ITEMS IN THE DB
+
+      List<String> list = [];
+      var element = await _firestore.collection('location').get();
+      for(var item in element.docs){
+        if(list.contains(item.data()['email'])){
+          //delete
+          await _firestore.collection('location').doc(item.id).delete().then((value) {
+          }).catchError((onError){
+            print('$onError');
+          });
+        }else{
+          list.add(item.data()['email']);
+        }
+      }
+
     });
 
 

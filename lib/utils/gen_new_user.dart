@@ -32,7 +32,7 @@ class GenNewUser{
 }
 
 class User{
-  User({this.name,this.email,this.password,this.address,this.latitude,this.longitude});
+  User({this.name,this.email,this.password,this.address,this.latitude,this.longitude, this.id});
 
   var name;
   var email;
@@ -40,4 +40,5 @@ class User{
   var address;
   var latitude;
   var longitude;
+  var id;
 }
