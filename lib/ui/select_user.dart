@@ -116,11 +116,16 @@ class _SelectUserState extends State<SelectUser> {
                         // fontWeight: FontWeight.w700,
                         fontWeight: FontWeight.bold
                       ),),
-                    Text('$_myAddress',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 12.0,
-                      ),),
+                    Row(
+                      children: [
+                        Icon(Icons.location_on,size: 14,color: Colors.white,),
+                        Text(' $_myAddress',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 12.0,
+                          ),),
+                      ],
+                    ),
                   ],
                 ),
               ),

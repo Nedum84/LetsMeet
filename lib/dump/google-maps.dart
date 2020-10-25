@@ -267,4 +267,26 @@ class _MapLocationState extends State<MapLocation>{
     // Adding the polyline to the map
     polylines[id] = polyline;
   }
+
+
+
+
+
+// getPositionStream(desiredAccuracy: geo.LocationAccuracy.best, forceAndroidLocationManager: true, timeInterval: 1).listen((Position position) {
+//   startCoordinates.latitude = position.latitude;
+//   startCoordinates.longitude = position.longitude;
+//   // print('CURRENT POS: $_currentPosition');
+//
+//   mapController.animateCamera(
+//     CameraUpdate.newCameraPosition(
+//       CameraPosition(
+//         target: LatLng(position.latitude, position.longitude),
+//         zoom: 16.0,
+//       ),
+//     ),
+//   );
+//
+//   setState(() {_currentPosition = position;});
+// });
+
 }
