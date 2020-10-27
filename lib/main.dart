@@ -1,9 +1,8 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
-import 'package:location_tracker/ui/select_user.dart';
-import 'ui/map_location.dart';
-import 'ui_map.dart';
-import 'welcome_screen.dart';
+import 'file:///C:/Users/NEDUM/AndroidStudioProjects/location_tracker/lib/screens/select_user.dart';
+import 'screens/track_user.dart';
+import 'screens/splash_screen.dart';
 
 void main() {//async
   // WidgetsFlutterBinding.ensureInitialized();
@@ -16,18 +15,19 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
+      debugShowCheckedModeBanner: false,
+      title: 'Let\'s Meet',
       theme: ThemeData(
         primarySwatch: Colors.blue,
         visualDensity: VisualDensity.adaptivePlatformDensity,
+        // canvasColor: Colors.transparent,
       ),
       // home: WelcomeScreen(),
       initialRoute: SelectUser.id,
       routes: {
-        WelcomeScreen.id: (context)=> WelcomeScreen(),
+        SplashScreen.id: (context)=> SplashScreen(),
         SelectUser.id: (context)=> SelectUser(),
-        MapLocation.id: (context) => MapLocation(title: "Map Screen",),
-        UiMap.id: (context) => UiMap(),
+        TrackUser.id: (context) => TrackUser(title: "Track User",),
       },
     );
   }

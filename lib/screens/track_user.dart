@@ -1,38 +1,40 @@
 import 'dart:async';
 import 'dart:math' show cos, sqrt, asin;
+import 'dart:ui';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_polyline_points/flutter_polyline_points.dart';
 import 'package:geocoder/geocoder.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-
-// import 'package:location/location.dart';
 import 'package:location_tracker/model/map_point.dart';
-
 import 'package:geolocator/geolocator.dart';
-import 'package:geolocator_platform_interface/src/enums/location_accuracy.dart'
-as geo;
+import 'package:geolocator_platform_interface/src/enums/location_accuracy.dart' as geo;
+import 'package:location_tracker/services/network.dart';
 import 'package:location_tracker/utils/constants.dart';
 import 'package:location_tracker/utils/firebase_transaction.dart';
 import 'package:location_tracker/utils/gen_new_user.dart' as nUser;
+import 'package:location_tracker/utils/map_transaction.dart';
+import 'package:location_tracker/utils/widgets/modal_user_info.dart';
 
-class MapLocation extends StatefulWidget {
-  MapLocation({@required this.title});
 
-  static const id = 'map_location';
+
+class TrackUser extends StatefulWidget {
+  TrackUser({@required this.title});
+
+  static const id = 'track_user';
 
   final String title;
 
   @override
-  _MapLocationState createState() => _MapLocationState();
+  _TrackUserState createState() => _TrackUserState();
 }
 
-class _MapLocationState extends State<MapLocation> {
+class _TrackUserState extends State<TrackUser> {
   String _myAddress;
   String _myName;
   String _myEmail;
   bool zoomFlag = false;
-  var _distance;
+  var _totalDistance = '0.0';
   nUser.User _user = nUser.User();
   Set<Marker> markers = {};
 
@@ -218,24 +220,26 @@ class _MapLocationState extends State<MapLocation> {
           ),
         ),
         Positioned(
-          top: 180,
+          top: 160,
           right: 0,
           left: 0,
           child: Container(
             padding: EdgeInsets.symmetric(vertical: 6, horizontal: 12),
-            margin: EdgeInsets.only(top: 6, right: 20, left: 20),
+            margin: EdgeInsets.only(top: 6, right: 60, left: 60),
             decoration: BoxDecoration(
-              color: Colors.redAccent,
+              color: Colors.white70,
               borderRadius: BorderRadius.all(Radius.circular(25)),),
             child: Expanded(
               child: Padding(
                 padding: const EdgeInsets.all(8.0),
                 child: Text(
-                  'DISTANCE: $_distance km',
+                  'DISTANCE: $_totalDistance',
+                  textAlign: TextAlign.center,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                    color: Colors.white,
+                    color: Colors.black87,
+                    fontWeight: FontWeight.w500
                   ),
                 ),
               ),
@@ -270,10 +274,11 @@ class _MapLocationState extends State<MapLocation> {
         startCoordinates.latitude,
         startCoordinates.longitude,
       ),
-      infoWindow: InfoWindow(
-        title: 'FROM: $_myName',
-        snippet: _myAddress,
-      ),
+      onTap: (){
+        showModalBottomSheet(context: context, builder: (builder){
+          return ModalUserInfo(name: _myName, from_address: _myAddress, to_address: _user.address, email: _myEmail, start_point: startCoordinates, destination_point: destinationCoordinates, status: "Start",);
+        });
+      },
       icon: BitmapDescriptor.defaultMarker,
     );
 
@@ -284,10 +289,11 @@ class _MapLocationState extends State<MapLocation> {
         destinationCoordinates.latitude,
         destinationCoordinates.longitude,
       ),
-      infoWindow: InfoWindow(
-        title: "TO: ${_user.name}",
-        snippet: _user.address,
-      ),
+      onTap: (){
+        showModalBottomSheet(context: context, builder: (builder){
+          return ModalUserInfo(name: _user.name, from_address: _user.address, to_address: _myAddress, email: _user.email, start_point: destinationCoordinates, destination_point: startCoordinates, status: "Destination",);
+        });
+      },
       icon: BitmapDescriptor.defaultMarker,
     );
 
@@ -298,41 +304,6 @@ class _MapLocationState extends State<MapLocation> {
     });
   }
 
-  Future<void> updateCameraLocation(LatLng source, LatLng destination) async {
-    if (mapController == null) return;
-
-    LatLngBounds bounds;
-
-    if (source.latitude > destination.latitude &&
-        source.longitude > destination.longitude) {
-      bounds = LatLngBounds(southwest: destination, northeast: source);
-    } else if (source.longitude > destination.longitude) {
-      bounds = LatLngBounds(
-          southwest: LatLng(source.latitude, destination.longitude),
-          northeast: LatLng(destination.latitude, source.longitude));
-    } else if (source.latitude > destination.latitude) {
-      bounds = LatLngBounds(
-          southwest: LatLng(destination.latitude, source.longitude),
-          northeast: LatLng(source.latitude, destination.longitude));
-    } else {
-      bounds = LatLngBounds(southwest: source, northeast: destination);
-    }
-
-    CameraUpdate cameraUpdate = CameraUpdate.newLatLngBounds(bounds, 80);
-
-    return checkCameraLocation(cameraUpdate, mapController);
-  }
-
-  Future<void> checkCameraLocation(CameraUpdate cameraUpdate,
-      GoogleMapController mapController) async {
-    mapController.animateCamera(cameraUpdate);
-    LatLngBounds l1 = await mapController.getVisibleRegion();
-    LatLngBounds l2 = await mapController.getVisibleRegion();
-
-    if (l1.southwest.latitude == -90 || l2.southwest.latitude == -90) {
-      return checkCameraLocation(cameraUpdate, mapController);
-    }
-  }
 
   void setMarkerConstraints() async {
     var lats = [startCoordinates.latitude, destinationCoordinates.latitude];
@@ -348,113 +319,31 @@ class _MapLocationState extends State<MapLocation> {
           ),
           50));
     });
-
-    // Define two position variables
-//     MapPoint _northeastCoordinates;
-//     MapPoint _southwestCoordinates;
-//
-// // Calculating to check that
-// // southwest coordinate <= northeast coordinate
-//     if (startCoordinates.latitude <= destinationCoordinates.latitude) {
-//       _southwestCoordinates = startCoordinates;
-//       _northeastCoordinates = destinationCoordinates;
-//     } else {
-//       _southwestCoordinates = destinationCoordinates;
-//       _northeastCoordinates = startCoordinates;
-//     }
-//
-// // Accommodate the two locations within the
-// // camera view of the map
-//     mapController.animateCamera(
-//       CameraUpdate.newLatLngBounds(
-//         LatLngBounds(
-//           northeast: LatLng(
-//             _northeastCoordinates.latitude,
-//             _northeastCoordinates.longitude,
-//           ),
-//           southwest: LatLng(
-//             _southwestCoordinates.latitude,
-//             _southwestCoordinates.longitude,
-//           ),
-//         ),
-//         100.0, // padding
-//       ),
-//     );
-
-    // var source        = LatLng(startCoordinates.latitude, startCoordinates.longitude);
-    // var destination   = LatLng(destinationCoordinates.latitude, destinationCoordinates.longitude);
-    //
-    // List <LatLng> list;
-    // list.add(source);
-    // list.add(destination);
-
-    // await updateCameraLocation(source, destination);
-
-    // setState(() {
-    //   mapController.animateCamera(CameraUpdate.newLatLngBounds(
-    //       boundsFromLatLngList(list),
-    //       100
-    //   ));
-    // });
-
-    // var lats = [startCoordinates.latitude, destinationCoordinates.latitude];
-    // var longs = [startCoordinates.longitude, destinationCoordinates.longitude];
-    // lats.sort((a, b) => a.compareTo(b));//asc
-    // longs.sort((a, b) => a.compareTo(b));//asc
-    //
-    // setState(() {
-    //   mapController.animateCamera(CameraUpdate.newLatLngBounds(
-    //       LatLngBounds(
-    //         // southwest: LatLng(latMin, longMin),
-    //         // northeast: LatLng(latMax, longMax),
-    //         southwest: LatLng(lats[0], longs[0]),
-    //         northeast: LatLng(lats[1], longs[1]),
-    //       ),
-    //       100
-    //   ));
-    // });
-
-    // // For ascending
-    // var nlist = [1, 6, 8, 2, 16, 0]
-    // nlist.sort((a, b) => a.compareTo(b));
-    // // For descending
-    // var nlist = [1, 6, 8, 2, 16, 0]
-    // nlist.sort((b, a) => a.compareTo(b));
-  }
-
-  LatLngBounds boundsFromLatLngList(List<LatLng> list) {
-    assert(list.isNotEmpty);
-    double x0, x1, y0, y1;
-    for (LatLng latLng in list) {
-      if (x0 == null) {
-        x0 = x1 = latLng.latitude;
-        y0 = y1 = latLng.longitude;
-      } else {
-        if (latLng.latitude > x1) x1 = latLng.latitude;
-        if (latLng.latitude < x0) x0 = latLng.latitude;
-        if (latLng.longitude > y1) y1 = latLng.longitude;
-        if (latLng.longitude < y0) y0 = latLng.longitude;
-      }
-    }
-    return LatLngBounds(northeast: LatLng(x1, y1), southwest: LatLng(x0, y0));
   }
 
   void calculateDistance() async {
-    double distanceInMeters = distanceBetween(startCoordinates.latitude, startCoordinates.longitude, destinationCoordinates.latitude, destinationCoordinates.longitude,);
-    double distanceInMeters2 = calcDistance(startCoordinates.latitude, startCoordinates.longitude, destinationCoordinates.latitude, destinationCoordinates.longitude);
+    // double distanceInMeters = distanceBetween(startCoordinates.latitude, startCoordinates.longitude, destinationCoordinates.latitude, destinationCoordinates.longitude,);
+    // double distanceInMeters2 = MapTransaction.calcDistance(startCoordinates.latitude, startCoordinates.longitude, destinationCoordinates.latitude, destinationCoordinates.longitude);
+    //
+    // setState(() {
+    //   _totalDistance = (distanceInMeters/1000).toStringAsFixed(2);//to 2 dp
+    // });
+
+
+    //using G-Map
+    var mapResult = await NetworkHelper(startCoordinates, destinationCoordinates).getData();
+
+    if (mapResult == null) {
+      Navigator.of(context).pop();
+      return;
+    }
+
+    var routes = mapResult['routes'];
 
     setState(() {
-      _distance = (distanceInMeters/1000).toStringAsFixed(2);//to 2 dp
+      _totalDistance = routes[0]['legs'][0]['distance']['text'];
+      var total_duration = routes[0]['legs'][0]['duration']['text'];
     });
-  }
-
-  double calcDistance(lat1, lon1, lat2, lon2){
-    var p = 0.017453292519943295;
-    var c = cos;
-    var a = 0.5 - c((lat2 - lat1) * p)/2 +
-        c(lat1 * p) * c(lat2 * p) *
-            (1 - c((lon2 - lon1) * p))/2;
-    return 12742 * asin(sqrt(a));
   }
 
 

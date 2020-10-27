@@ -2,11 +2,9 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_polyline_points/flutter_polyline_points.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:location/location.dart';
 import 'package:location_tracker/model/map_point.dart';
-
 import 'package:geolocator/geolocator.dart';
-import 'package:geolocator_platform_interface/src/enums/location_accuracy.dart' as geo;
+import "package:geolocator_platform_interface/src/enums/location_accuracy.dart" as geo;
 import 'package:location_tracker/utils/constants.dart';
 
 
@@ -22,7 +20,7 @@ class MapLocation extends StatefulWidget{
 }
 
 class _MapLocationState extends State<MapLocation>{
-  Location _myLocation;
+  // Location _myLocation;
   Set<Marker> markers = {};
 
   // Getting the placemarks
@@ -38,29 +36,51 @@ class _MapLocationState extends State<MapLocation>{
 
   void _myLocationListener(GoogleMapController controller){
     mapController = controller;
-    _myLocation.onLocationChanged.listen((LocationData currentLocation) {// Use current location
-      // Move camera to the specified latitude & longitude
-      mapController.animateCamera(
-        CameraUpdate.newCameraPosition(
-          CameraPosition(
-            target: LatLng(
-              // Will be fetching in the next step
-              currentLocation.latitude,
-              currentLocation.longitude,
-            ),
-            zoom: 18.0,
-          ),
-        ),
-      );
+    // _myLocation.onLocationChanged.listen((LocationData currentLocation) {// Use current location
+    //   // Move camera to the specified latitude & longitude
+    //   mapController.animateCamera(
+    //     CameraUpdate.newCameraPosition(
+    //       CameraPosition(
+    //         target: LatLng(
+    //           // Will be fetching in the next step
+    //           currentLocation.latitude,
+    //           currentLocation.longitude,
+    //         ),
+    //         zoom: 18.0,
+    //       ),
+    //     ),
+    //   );
 
 
-      startCoordinates.latitude = currentLocation.latitude;
-      startCoordinates.longitude = currentLocation.longitude;
-      // updateMarkers();
-    });
+    //   startCoordinates.latitude = currentLocation.latitude;
+    //   startCoordinates.longitude = currentLocation.longitude;
+    //   // updateMarkers();
+    // });
   }
 
-
+  // GoogleMap(
+  // markers: _markers,
+  // initialCameraPosition: _theSecretLocation,
+  // onMapCreated: (GoogleMapController controller) {
+  // _controller.complete(controller);
+  // },
+  // onTap: _handleTap,
+  // ),
+  // ...
+  //
+  // _handleTap(LatLng point) {
+  //   setState(() {
+  //     _markers.add(Marker(
+  //       markerId: MarkerId(point.toString()),
+  //       position: point,
+  //       infoWindow: InfoWindow(
+  //         title: 'I am a marker',
+  //       ),
+  //       icon:
+  //       BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueMagenta),
+  //     ));
+  //   });
+  // }
 
 // For storing the current position
   Position _currentPosition;

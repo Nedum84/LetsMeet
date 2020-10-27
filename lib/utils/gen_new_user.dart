@@ -1,5 +1,3 @@
-
-
 import 'dart:math';
 
 class GenNewUser{
@@ -23,9 +21,6 @@ class GenNewUser{
 
 
   User newUser(){
-    // String name = (names..shuffle()).first;
-    // String password = '${randNo}LetsMeet';
-
     return users[Random().nextInt(users.length)];;
 }
 

@@ -4,10 +4,11 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:geocoder/geocoder.dart';
 import 'package:geolocator/geolocator.dart';
-import 'file:///C:/Users/NEDUM/AndroidStudioProjects/location_tracker/lib/ui/map_location.dart';
 import 'package:location_tracker/utils/gen_new_user.dart' as nUser;
 import 'package:modal_progress_hud/modal_progress_hud.dart';
 import 'package:location_tracker/utils/firebase_transaction.dart';
+import 'track_user.dart';
+
 
 
 class SelectUser extends StatefulWidget {
@@ -65,9 +66,6 @@ class _SelectUserState extends State<SelectUser> {
           print(loggedInUser);
         }
       });
-      setState(() {showSpinner = false; });
-
-
     });
 
 
@@ -80,7 +78,9 @@ class _SelectUserState extends State<SelectUser> {
       backgroundColor: Colors.lightBlueAccent,
       // appBar: AppBar(title: Text('Welcome!'),),
       body: ModalProgressHUD(
+        opacity: .5,
         inAsyncCall: showSpinner,
+        color: Colors.black,
         child: Container(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -95,10 +95,15 @@ class _SelectUserState extends State<SelectUser> {
                       onTap: (){
                         // FirebaseAuth.instance.signOut();
                       },
-                      child: CircleAvatar(
-                          child: Icon(Icons.list,size: 30, color: Colors.lightBlueAccent,),
-                        backgroundColor: Colors.white,
-                        radius: 30,
+                      child: Container(
+                        width: 60,
+                        height: 60,
+                        padding: EdgeInsets.all(2),
+                        decoration: BoxDecoration(
+                          color: Colors.transparent,
+                          borderRadius: BorderRadius.all(Radius.circular(100.00)),
+                        ),
+                        child: Image.asset('images/logo.png'),
                       ),
                     ),
                     SizedBox(height: 10,),
@@ -113,8 +118,7 @@ class _SelectUserState extends State<SelectUser> {
                     Text('Meet a New Friend Today',
                       style: TextStyle(
                         color: Colors.white,
-                        fontSize: 22.0,
-                        // fontWeight: FontWeight.w700,
+                        fontSize: 23.0,
                         fontWeight: FontWeight.bold
                       ),),
                     Row(
@@ -132,7 +136,7 @@ class _SelectUserState extends State<SelectUser> {
               ),
               Expanded(
                 child: Container(
-                  padding: EdgeInsets.only(top: 15),
+                  padding: EdgeInsets.only(top: 20),
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.only(topLeft: Radius.circular(20.0),topRight: Radius.circular(20.0)),
@@ -144,92 +148,91 @@ class _SelectUserState extends State<SelectUser> {
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           color: Colors.black,
-                          fontSize: 18.0,
+                          fontSize: 20.0,
                           // fontWeight: FontWeight.bold
                         ),
                       ),
                       SizedBox(
-                        height: 30.0,
-                        width: 150.0,
+                        height: 50,
+                      ),
+                      SizedBox(
                         child: Divider(
-                          color: Colors.teal.shade50,
-                          thickness: 2,
+                          color: Colors.blueGrey.shade100,
+                          thickness: 1,
                         ),
                       ),
 
-                      Container(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: 0.0,
-                          vertical: 0.0,
-                        ),
-                        height: MediaQuery.of(context).size.height * 0.5,
-                        child: ListView.builder(
-                          // scrollDirection: Axis.horizontal,
-                          itemCount: users!=null?users.length:0,
-                          itemBuilder: (context, index) {
-                            return GestureDetector(
-                              onTap: (){
-                                Navigator.pushNamed(
-                                    context,
-                                    MapLocation.id,
-                                    arguments: {
-                                      'name': users[index].name,
-                                      'email': users[index].email,
-                                      'address': users[index].address,
-                                      'latitude': users[index].latitude,
-                                      'longitude': users[index].longitude,
-                                      'my_name': _myName,
-                                      'my_address': _myAddress,
-                                      'my_email': _myEmail
-                                    }
-                                );
-                              },
-                              child: Container(
-                                  child: Column(
-                                    children: [
-                                      Row(
-                                        children: [
-                                          // Text('1.',
-                                          // style: TextStyle(fontSize: 50),),
-                                          Expanded(
-                                            child: Container(
-                                              padding: EdgeInsets.only(top: 8, left: 20),
-                                              child: Column(
-                                                crossAxisAlignment: CrossAxisAlignment.start,
-                                                children: [
-                                                  Text(users[index].name,
-                                                    style: TextStyle(
-                                                      color: Colors.black,
-                                                      fontSize: 20,
-                                                      fontWeight: FontWeight.w500,
-                                                    ),),
-                                                  Text('Last Knwon Addr: ${users[index].address}',
-                                                    style: TextStyle(
-                                                      fontStyle: FontStyle.italic,
-                                                    ),),
-                                                ],
+                      Expanded(
+                        child: Container(
+                          child: ListView.builder(
+                            // scrollDirection: Axis.horizontal,
+                            itemCount: users!=null?users.length:0,
+                            itemBuilder: (context, index) {
+                              return GestureDetector(
+                                onTap: (){
+                                  Navigator.pushNamed(
+                                      context,
+                                      TrackUser.id,
+                                      arguments: {
+                                        'name': users[index].name,
+                                        'email': users[index].email,
+                                        'address': users[index].address,
+                                        'latitude': users[index].latitude,
+                                        'longitude': users[index].longitude,
+                                        'my_name': _myName,
+                                        'my_address': _myAddress,
+                                        'my_email': _myEmail
+                                      }
+                                  );
+                                },
+                                child: Container(
+                                    child: Column(
+                                      children: [
+                                        Row(
+                                          children: [
+                                            // Text('1.',
+                                            // style: TextStyle(fontSize: 50),),
+                                            Expanded(
+                                              child: Container(
+                                                padding: EdgeInsets.only(top: 8, left: 20),
+                                                child: Column(
+                                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                                  children: [
+                                                    Text(users[index].name,
+                                                      style: TextStyle(
+                                                        color: Colors.black,
+                                                        fontSize: 20,
+                                                        fontWeight: FontWeight.w500,
+                                                      ),),
+                                                    Text('${users[index].address}',
+                                                      style: TextStyle(
+                                                        fontSize: 13,
+                                                        color: Colors.blueGrey
+                                                      ),),
+                                                  ],
+                                                ),
                                               ),
                                             ),
-                                          ),
-                                          CircleAvatar(
-                                            child: Icon(Icons.arrow_forward_ios, color: Colors.white54,),
-                                            backgroundColor: Colors.blueGrey,
-                                          ),
-                                          SizedBox(width: 15,)
-                                        ],
-                                      ),
-                                      SizedBox(
-                                        height: 20,
-                                        child: Divider(
-                                          thickness: 1,
-                                          color: Colors.black12,
+                                            CircleAvatar(
+                                              child: Icon(Icons.arrow_forward_ios, color: Colors.white54,),
+                                              backgroundColor: Colors.blueGrey,
+                                            ),
+                                            SizedBox(width: 15,)
+                                          ],
                                         ),
-                                      ),
-                                    ],
+                                        SizedBox(
+                                          height: 20,
+                                          child: Divider(
+                                            thickness: 1,
+                                            color: Colors.black12,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
                                   ),
-                                ),
-                            );
-                          },
+                              );
+                            },
+                          ),
                         ),
                       ),
 
@@ -290,6 +293,8 @@ class _SelectUserState extends State<SelectUser> {
         getUsers();
       }).catchError((e) { print(e); });
 
+
+      setState(() {showSpinner = false; });
     }).catchError((e) {
       print(e);
     });

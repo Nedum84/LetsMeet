@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 
-class WelcomeScreen extends StatefulWidget {
-  static const String id = 'welcome_screen';
+class SplashScreen extends StatefulWidget {
+  static const String id = 'splash_screen';
 
   @override
-  _WelcomeScreenState createState() => _WelcomeScreenState();
+  _SplashScreenState createState() => _SplashScreenState();
 }
 
-class _WelcomeScreenState extends State<WelcomeScreen> {
+class _SplashScreenState extends State<SplashScreen> {
 
 
   @override
@@ -21,7 +21,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
           Expanded(
             flex: 5,
             child: Container(
-              child: Image.asset('assets/map.png'),
+              child: Image.asset('images/lm_two_user.jpg'),
               padding: EdgeInsets.all(20.0),
             ),
           ),
