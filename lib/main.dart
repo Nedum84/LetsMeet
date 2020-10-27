@@ -23,7 +23,7 @@ class MyApp extends StatelessWidget {
         // canvasColor: Colors.transparent,
       ),
       // home: WelcomeScreen(),
-      initialRoute: SelectUser.id,
+      initialRoute: SplashScreen.id,
       routes: {
         SplashScreen.id: (context)=> SplashScreen(),
         SelectUser.id: (context)=> SelectUser(),

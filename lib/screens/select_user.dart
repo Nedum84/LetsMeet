@@ -153,9 +153,6 @@ class _SelectUserState extends State<SelectUser> {
                         ),
                       ),
                       SizedBox(
-                        height: 50,
-                      ),
-                      SizedBox(
                         child: Divider(
                           color: Colors.blueGrey.shade100,
                           thickness: 1,
