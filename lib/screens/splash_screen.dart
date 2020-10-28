@@ -18,10 +18,14 @@ class _SplashScreenState extends State<SplashScreen> {
   void initState() {
     super.initState();
     Timer(Duration(seconds: 3),(){
-      Navigator.pushNamed(
-        context,
-        SelectUser.id,
-      );
+
+      // Navigator.pushNamed(
+      //   context,
+      //   SelectUser.id,
+      // );
+
+      Navigator.pushReplacementNamed(context, SelectUser.id);//without back trace
+      // Navigator.pushNamedAndRemoveUntil(context, SelectUser.id, (Route<dynamic> route) => false);//without back trace
     });
   }
 

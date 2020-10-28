@@ -22,10 +22,11 @@ User loggedInUser;
 
 class _SelectUserState extends State<SelectUser> {
   String _myAddress = 'No address';
-  String _myName;
+  String _myName = '';
   String _myEmail;
   List<nUser.User> users = [];
   bool showSpinner = false;
+
 
 
   @override
@@ -151,6 +152,9 @@ class _SelectUserState extends State<SelectUser> {
                           fontSize: 20.0,
                           // fontWeight: FontWeight.bold
                         ),
+                      ),
+                      SizedBox(
+                        height: 10,
                       ),
                       SizedBox(
                         child: Divider(

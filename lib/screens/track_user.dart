@@ -34,6 +34,7 @@ class _TrackUserState extends State<TrackUser> {
   String _myName;
   String _myEmail;
   bool zoomFlag = false;
+  bool isFirstTime = true;
   var _totalDistance = '0.0';
   nUser.User _user = nUser.User();
   Set<Marker> markers = {};
@@ -56,8 +57,15 @@ class _TrackUserState extends State<TrackUser> {
 
   void _myLocationListener(GoogleMapController controller) {
     mapController = controller;
+  }
+
+
+  @override
+  void initState() {
+    super.initState();
     updateCurrentLocation();
   }
+
 
 // For storing the current position
   Position _currentPosition;
@@ -65,6 +73,7 @@ class _TrackUserState extends State<TrackUser> {
   // Method for retrieving the current location
   void updateCurrentLocation() async {
 
+    //GET MY CURRENT LOCATION
     await getCurrentPosition(desiredAccuracy: LocationAccuracy.high).then((Position position) async {
       _currentPosition = position;
       startCoordinates.latitude = _currentPosition.latitude;
@@ -75,28 +84,21 @@ class _TrackUserState extends State<TrackUser> {
 
       setState(() {_myAddress = first.addressLine;});
       updateMarkers();
-      drawRoutes();
       calculateDistance();
+      if(isFirstTime){
+        drawRoutes();
+        setMarkerConstraints();
+        isFirstTime = false;
+      }
 
       await FirebaseTransaction.addUserToDb(position, _myEmail, first.addressLine).then((value) {
 
-        if(!zoomFlag){
-          zoomFlag= true;
-          setMarkerConstraints();
-        }else{
-          zoomFlag = false;
-          mapController.animateCamera(CameraUpdate.newCameraPosition(
-              CameraPosition(
-                target: LatLng(startCoordinates.latitude, startCoordinates.longitude),
-                zoom: 24,
-              )
-          ));
-        }
       }).catchError((e) { print(e); });
 
     }).catchError((e) {
       print(e);
     });
+
   }
 
 
@@ -250,8 +252,24 @@ class _TrackUserState extends State<TrackUser> {
           bottom: 30,
           right: 20,
           child: GestureDetector(
-            onTap: (){
+            onTap: () async{
               updateCurrentLocation();
+
+              //for zooming and current location adjusting
+              if(!isFirstTime){
+                if(!zoomFlag){
+                  zoomFlag= true;
+                  setMarkerConstraints();
+                }else{
+                  zoomFlag = false;
+                  mapController.animateCamera(CameraUpdate.newCameraPosition(
+                    CameraPosition(
+                        target: LatLng(startCoordinates.latitude, startCoordinates.longitude),
+                        zoom: (await mapController.getZoomLevel())+2,
+                  )
+                  ));
+            }
+            }
             },
             child: CircleAvatar(
               radius: 30,
@@ -359,6 +377,7 @@ class _TrackUserState extends State<TrackUser> {
   Map<PolylineId, Polyline> polylines = {};
   // Create the polylines for showing the route between two places
   void drawRoutes() async {
+    polylines.clear();
     // Initializing PolylinePoints
     polylinePoints = PolylinePoints();
 
