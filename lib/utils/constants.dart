@@ -1,7 +1,4 @@
 
-
-const API_KEY = 'AIzaSyBTmcShlRlbocOvmaYVWTxnrHsHD3H6xqM';
-
 final countryArray = [
   'Albania',
   'Andorra',
